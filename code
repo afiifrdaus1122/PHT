@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kos baik.com - Sistem Laporan Harian</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #3498db;
+      --primary-dark: #2980b9;
+      --secondary: #2ecc71;
+      --secondary-dark: #27ae60;
+      --danger: #e74c3c;
+      --danger-dark: #c0392b;
+      --warning: #f39c12;
+      --dark: #2c3e50;
+      --light: #ecf0f1;
+      --gray: #95a5a6;
+      --border: #bdc3c7;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #3498db 0%, #8e44ad 100%);
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 10px;
+    }
+    
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    
+    /* Header Styles */
+    header {
+      background: var(--dark);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .logo-icon {
+      background: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    .logo-text span {
+      color: var(--secondary);
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .user-select {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      outline: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .user-select option {
+      background: var(--dark);
+      color: white;
+    }
+    
+    /* Navigation */
+    nav {
+      background: var(--primary);
+      padding: 0 15px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    
+    .nav-tabs {
+      display: flex;
+      list-style: none;
+    }
+    
+    .nav-tabs li {
+      padding: 12px 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+      font-weight: 500;
+      font-size: 14px;
+      color: white;
+    }
+    
+    .nav-tabs li.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-bottom: 3px solid var(--secondary);
+    }
+    
+    .nav-tabs li:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-tabs i {
+      margin-right: 5px;
+    }
+    
+    /* Main Content */
+    .main-content {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    
+    .content-section {
+      display: none;
+    }
+    
+    .content-section.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .card-title {
+      font-size: 18px;
+      color: var(--dark);
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .card-title i {
+      color: var(--primary);
+      font-size: 18px;
+    }
+    
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 15px;
+      position: relative; /* For error messages */
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+    
+    select, input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    }
+
+    input.error, select.error, textarea.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+    }
+    
+    .error-message {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 5px;
+      display: block;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+    
+    .btn-success {
+      background: var(--secondary);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: var(--secondary-dark);
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-dark);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+    }
+
+    .btn-warning:hover {
+      background: #e67e22;
+    }
+    
+    /* Report History */
+    .history-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+        align-items: flex-end;
+    }
+    .history-filters .form-group {
+        flex: 1;
+        min-width: 150px;
+        margin-bottom: 0;
+    }
+    .history-filters .form-group.half-width {
+        flex-basis: calc(50% - 5px); /* For sort/order */
+        min-width: 120px;
+    }
+    .history-filters .form-group.full-width {
+        flex-basis: 100%;
+        min-width: unset;
+    }
+
+    .history-filters .btn {
+        flex-shrink: 0;
+        align-self: flex-start; /* Align buttons with filters */
+        margin-top: 22px; /* Adjust as needed for alignment */
+    }
+    
+    .history-item {
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      background: #f9fbfd;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .history-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      border-color: var(--primary);
+    }
+    
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .report-meta {
+      display: flex;
+      gap: 10px;
+      color: var(--gray);
+      font-size: 12px;
+    }
+    
+    .report-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .report-actions {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+    }
+    
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.05);
+      color: var(--dark);
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 12px;
+    }
+    
+    .action-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .report-content {
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 30px 15px;
+      color: var(--gray);
+    }
+    
+    .empty-state i {
+      font-size: 40px;
+      margin-bottom: 12px;
+      color: #ddd;
+    }
+
+    .empty-state-small {
+      text-align: center;
+      padding: 20px 0;
+      color: #95a5a6;
+    }
+
+    .empty-state-small i {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    /* Toast Notification */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--secondary);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out, bottom 0.3s ease-in-out;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast-notification.show {
+      opacity: 1;
+      bottom: 30px;
+    }
+
+    /* Notification Item in Sidebar */
+    .notification-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .notification-item:last-child {
+      border-bottom: none;
+    }
+    
+    /* Print Section Specific Styles */
+    .print-controls, .history-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+        align-items: flex-end;
+    }
+    .print-controls .form-group, .history-filters .form-group {
+        flex: 1;
+        min-width: 150px;
+        margin-bottom: 0; /* Override default form-group margin */
+    }
+    .print-controls .btn, .history-filters .btn {
+        flex-shrink: 0;
+    }
+    .print-preview {
+        border: 1px solid var(--border);
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #fcfcfc;
+        min-height: 200px;
+        overflow-y: auto;
+    }
+    .print-preview h3 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: var(--dark);
+    }
+    .print-report-item {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #eee;
+    }
+    .print-report-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .print-report-item p {
+        margin-bottom: 5px;
+        font-size: 14px;
+    }
+    .print-report-item strong {
+        color: var(--primary-dark);
+    }
+
+    /* Chart styles */
+    .chart-container {
+        position: relative;
+        height: 300px; /* Fixed height for charts */
+        margin-bottom: 20px;
+    }
+    
+    /* Footer */
+    footer {
+      background: var(--dark);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 13px;
+    }
+
+    /* New styles for image upload */
+    .image-upload-preview {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .image-upload-preview img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: none; /* Hidden by default */
+    }
+    
+    /* Responsive Design */
+    @media (min-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr 300px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .nav-tabs li span {
+        display: none;
+      }
+      
+      .nav-tabs li i {
+        margin-right: 0;
+        font-size: 16px;
+      }
+      
+      .history-controls {
+        flex-direction: column;
+      }
+      
+      .report-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .report-meta {
+        flex-wrap: wrap;
+      }
+      
+      .logo-text {
+        font-size: 18px;
+      }
+      
+      .user-info {
+        font-size: 14px;
+      }
+      
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+      }
+
+      .user-select {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .app-container {
+        border-radius: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+      header {
+        padding: 15px;
+      }
+      .main-content {
+        padding: 15px;
+      }
+      .card {
+        padding: 15px;
+      }
+      .print-controls, .history-filters {
+          flex-direction: column;
+          align-items: stretch;
+      }
+      .print-controls .form-group, .history-filters .form-group {
+          width: 100%;
+      }
+      .history-filters .form-group.half-width {
+          flex-basis: 100%; /* Full width on small screens */
+      }
+      .print-controls .btn, .history-filters .btn {
+          width: 100%;
+      }
+    }
+
+    /* Print-specific styles - applied when printing */
+    @media print {
+        /* Hide everything by default, then selectively show what's needed for print */
+        body * {
+            visibility: hidden;
+            display: none; /* Add display: none to ensure elements are truly gone */
+        }
+        
+        /* Make the main app container visible again */
+        .app-container {
+            visibility: visible;
+            display: block;
+            width: 100%;
+            max-width: none; /* Remove max-width for full page print */
+            margin: 0;
+            box-shadow: none;
+            border-radius: 0;
+            overflow: visible;
+            background: white;
+            position: absolute; /* Position it to take up the whole print area */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* Specifically target the print section and its immediate children */
+        #cetak, #cetak.content-section.active, 
+        .main-content, .content-left,
+        .card, /* Make sure card is visible within the print section */
+        .print-preview, .print-preview * { /* Ensure print preview and its contents are visible */
+            visibility: visible !important;
+            display: block !important;
+        }
+
+        /* Hide elements that should *never* be printed */
+        header, nav, .content-right, footer, .toast-notification,
+        .history-controls, .report-actions, .empty-state, .card-title i,
+        .history-filters, #printReports, #generatePrint, /* Hide buttons/filters in print */
+        .print-controls, /* Hide the controls for print section */
+        .chart-container /* Hide charts in print */
+        {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Adjustments for print layout */
+        .main-content {
+            grid-template-columns: 1fr; /* Force single column */
+            padding: 20px; /* Add some padding for the print area */
+        }
+        .content-left {
+            width: 100%;
+        }
+        .card {
+            box-shadow: none;
+            border: none;
+            padding: 0; /* Remove card padding for print */
+            margin-bottom: 10px;
+            background: none;
+        }
+        .card-title {
+            border-bottom: none;
+            font-size: 20px;
+            text-align: center;
+            display: block; /* Ensure it's block for centering */
+            margin-bottom: 20px;
+            padding-bottom: 0;
+        }
+        .print-preview {
+            border: none;
+            padding: 0;
+            min-height: auto;
+            background-color: white;
+            box-shadow: none;
+            margin-top: 0; /* Remove top margin from default */
+        }
+        .print-report-item {
+            border-bottom: 1px dashed #ccc;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            page-break-inside: avoid; /* Prevent breaking inside an item */
+            color: black; /* Ensure text is black for print */
+        }
+        .print-report-item:last-child {
+            border-bottom: none;
+        }
+        .print-report-item p {
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .print-report-item strong {
+            color: #333; /* Darker color for strong text in print */
+        }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon"><i class="fas fa-home"></i></div>
+        <div class="logo-text">Kos <span>baik.com</span></div>
+      </div>
+      <div class="user-info">
+        <div class="user-avatar" id="header-avatar">-</div>
+        <div>
+          <select id="currentUser" class="user-select">
+            <option value="">Pilih Pengurus</option>
+            <option>Happy</option>
+            <option>Tomi</option>
+            <option>Indra</option>
+            <option>Afi</option>
+            <option>Amanda</option>
+            <option>Nurul</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <nav>
+      <ul class="nav-tabs">
+        <li data-tab-target="#dashboard" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></li>
+        <li data-tab-target="#lapor"><i class="fas fa-plus-circle"></i> <span>Buat Laporan</span></li>
+        <li data-tab-target="#riwayat"><i class="fas fa-history"></i> <span>Riwayat Laporan</span></li>
+        <li data-tab-target="#cetak"><i class="fas fa-print"></i> <span>Cetak Laporan</span></li>
+        <li data-tab-target="#pengaturan"><i class="fas fa-cog"></i> <span>Pengaturan</span></li>
+      </ul>
+    </nav>
+
+    <div class="main-content">
+      <div class="content-left">
+        <section id="dashboard" class="content-section active">
+          <div class="card">
+            <h2 class="card-title"><i class="fas fa-info-circle"></i> Ringkasan Laporan Anda</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-around; text-align: center;">
+              <div style="flex: 1; min-width: 120px; background: #e8f5e9; padding: 15px; border-radius: 8px; font-weight: bold; color: var(--dark);">
+                Total Laporan<br><span id="dashboard-total-reports" style="font-size: 2em; color: var(--secondary);">0</span>
+              </div>
+              <div style="flex: 1; min-width: 120px; background: #e3f2fd; padding: 15px; border-radius: 8px; font-weight: bold; color: var(--dark);">
+                Total Jam Kerja<br><span id="dashboard-total-hours" style="font-size: 2em; color: var(--primary);">0</span>
+              </div>
+              <div style="flex: 1; min-width: 120px; background: #ffe0b2; padding: 15px; border-radius: 8px; font-weight: bold; color: var(--dark);">
+                Terakhir Lapor<br><span id="dashboard-last-report" style="font-size: 1em; color: var(--warning);">Belum ada</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title"><i class="fas fa-chart-bar"></i> Statistik Laporan Bulanan</h2>
+            <div class="chart-container">
+                <canvas id="monthlyReportsChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title"><i class="fas fa-clipboard-list"></i> Aktivitas Laporan Terbaru Anda</h2>
+            <div id="recent-activity-container">
+              <div class="empty-state">
+                <i class="fas fa-clipboard"></i>
+                <p>Belum ada laporan dari Anda.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="lapor" class="content-section">
+          <div class="card">
+            <h2 class="card-title"><i class="fas fa-file-alt"></i> Buat Laporan Baru</h2>
+            <form id="reportForm">
+              <input type="hidden" id="reportIdToEdit">
+              <div class="form-group">
+                <label for="tanggal"><i class="fas fa-calendar-alt"></i> Tanggal:</label>
+                <input type="date" id="tanggal" required>
+                <span class="error-message" id="tanggal-error"></span>
+              </div>
+              <div class="form-group">
+                <label for="nama"><i class="fas fa-user"></i> Nama Pengurus:</label>
+                <select id="nama" required>
+                  <option value="">Pilih Pengurus</option>
+                  <option>Happy</option>
+                  <option>Tomi</option>
+                  <option>Indra</option>
+                  <option>Afi</option>
+                  <option>Amanda</option>
+                  <option>Nurul</option>
+                </select>
+                <span class="error-message" id="nama-error"></span>
+              </div>
+              <div class="form-group">
+                <label for="jamKerja"><i class="fas fa-hourglass-half"></i> Jam Kerja (Jam):</label>
+                <input type="number" id="jamKerja" min="1" max="24" required>
+                <span class="error-message" id="jamKerja-error"></span>
+              </div>
+              <div class="form-group">
+                <label for="keterangan"><i class="fas fa-comment-dots"></i> Keterangan / Uraian Kegiatan:</label>
+                <textarea id="keterangan" placeholder="Masukkan uraian kegiatan Anda hari ini..." required></textarea>
+                <span class="error-message" id="keterangan-error"></span>
+              </div>
+              <div class="form-group">
+                <label for="fotoLaporan"><i class="fas fa-camera"></i> Unggah Foto (Opsional):</label>
+                <input type="file" id="fotoLaporan" accept="image/*">
+                <span class="error-message" id="fotoLaporan-error"></span>
+                <div class="image-upload-preview">
+                  <img id="imagePreview" src="#" alt="Image Preview">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" id="submitReportBtn"><i class="fas fa-paper-plane"></i> Kirim Laporan</button>
+              <button type="button" class="btn btn-danger" id="cancelEditBtn" style="display: none;"><i class="fas fa-times-circle"></i> Batalkan</button>
+            </form>
+          </div>
+        </section>
+
+        <section id="riwayat" class="content-section">
+          <div class="card">
+            <h2 class="card-title"><i class="fas fa-history"></i> Riwayat Laporan Anda</h2>
+            <div class="history-filters">
+                <div class="form-group">
+                    <label for="historyStartDate"><i class="fas fa-calendar-day"></i> Dari Tanggal:</label>
+                    <input type="date" id="historyStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="historyEndDate"><i class="fas fa-calendar-day"></i> Sampai Tanggal:</label>
+                    <input type="date" id="historyEndDate">
+                </div>
+                <div class="form-group full-width">
+                    <label for="searchKeyword"><i class="fas fa-search"></i> Cari Keterangan:</label>
+                    <input type="text" id="searchKeyword" placeholder="Cari di uraian kegiatan...">
+                </div>
+                <div class="form-group half-width">
+                    <label for="filterJamKerjaMin"><i class="fas fa-clock"></i> Jam Kerja Min:</label>
+                    <input type="number" id="filterJamKerjaMin" min="0" max="24" placeholder="Min">
+                </div>
+                <div class="form-group half-width">
+                    <label for="filterJamKerjaMax"><i class="fas fa-clock"></i> Jam Kerja Max:</label>
+                    <input type="number" id="filterJamKerjaMax" min="0" max="24" placeholder="Max">
+                </div>
+                <div class="form-group half-width">
+                    <label for="sortBy"><i class="fas fa-sort"></i> Urutkan Berdasarkan:</label>
+                    <select id="sortBy">
+                        <option value="timestamp">Tanggal Dibuat</option>
+                        <option value="tanggal">Tanggal Laporan</option>
+                        <option value="jamKerja">Jam Kerja</option>
+                    </select>
+                </div>
+                <div class="form-group half-width">
+                    <label for="sortOrder"><i class="fas fa-sort-amount-down"></i> Urutan:</label>
+                    <select id="sortOrder">
+                        <option value="desc">Terbaru/Terbesar</option>
+                        <option value="asc">Terlama/Terkecil</option>
+                    </select>
+                </div>
+                <button id="applyHistoryFilters" class="btn btn-success"><i class="fas fa-filter"></i> Terapkan Filter</button>
+                <button id="clearHistoryFilters" class="btn btn-warning"><i class="fas fa-sync-alt"></i> Reset</button>
+                <button id="exportReportsCSV" class="btn btn-primary"><i class="fas fa-file-csv"></i> Export CSV</button>
+            </div>
+            <div id="riwayat-laporan-container">
+              <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>Silakan pilih pengurus di atas untuk melihat riwayat laporan Anda, atau belum ada laporan.</p>
+              </div>
+            </div>
+             <div class="form-group" style="margin-top: 30px;">
+                <button id="deleteAllUserReportsBtn" class="btn btn-danger" style="width: 100%;"><i class="fas fa-trash-alt"></i> Hapus Semua Riwayat Laporan</button>
+                <p style="color: var(--danger); font-size: 12px; margin-top: 5px;">*Tindakan ini tidak dapat dibatalkan dan hanya menghapus laporan untuk pengurus yang sedang aktif!</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="cetak" class="content-section">
+          <div class="card">
+            <h2 class="card-title"><i class="fas fa-print"></i> Cetak Laporan Anda</h2>
+            <div class="print-controls">
+                <div class="form-group">
+                    <label for="printStartDate"><i class="fas fa-calendar-day"></i> Dari Tanggal:</label>
+                    <input type="date" id="printStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="printEndDate"><i class="fas fa-calendar-day"></i> Sampai Tanggal:</label>
+                    <input type="date" id="printEndDate">
+                </div>
+                <button id="generatePrint" class="btn btn-success"><i class="fas fa-file-pdf"></i> Tampilkan</button>
+                <button id="printReports" class="btn btn-primary" style="display: none;"><i class="fas fa-print"></i> Cetak</button>
+            </div>
+            <div class="print-preview" id="print-preview-container">
+                <div class="empty-state">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Pilih pengurus di header, lalu pilih rentang tanggal dan klik "Tampilkan" untuk melihat laporan.</p>
+                </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="pengaturan" class="content-section">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-database"></i> Manajemen Data</h2>
+                <div class="form-group">
+                    <label for="backupInput"><i class="fas fa-download"></i> Backup Data Laporan:</label>
+                    <button id="backupDataBtn" class="btn btn-primary"><i class="fas fa-file-download"></i> Download Backup (JSON)</button>
+                </div>
+                <div class="form-group">
+                    <label for="restoreInput"><i class="fas fa-upload"></i> Restore Data Laporan:</label>
+                    <input type="file" id="restoreInput" accept=".json" class="form-control">
+                    <button id="restoreDataBtn" class="btn btn-success" style="margin-top: 10px;"><i class="fas fa-file-upload"></i> Unggah & Restore</button>
+                </div>
+                <div class="form-group" style="margin-top: 30px;">
+                    <label><i class="fas fa-exclamation-triangle"></i> Hapus Semua Riwayat Laporan (Global):</label>
+                    <button id="deleteAllReportsGlobalBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Hapus Semua Riwayat</button>
+                    <p style="color: var(--danger); font-size: 12px; margin-top: 5px;">*Tindakan ini akan menghapus SEMUA laporan dari SEMUA pengurus dan tidak dapat dibatalkan!</p>
+                </div>
+            </div>
+        </section>
+
+      </div>
+
+      <div class="content-right">
+        <div class="card">
+          <h2 class="card-title"><i class="fas fa-bell"></i> Aktivitas Terbaru</h2>
+          <div id="notifications-container">
+            <div class="empty-state-small">
+              <i class="fas fa-bell-slash"></i>
+              <p>Belum ada aktivitas</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title"><i class="fas fa-hashtag"></i> KosBaik.com</h2>
+          <p style="text-align: center; font-weight: bold; font-size: 18px; color: var(--primary); margin: 10px 0;">
+            #ngekos bareng baik bareng
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      &copy; 2025 Kos baik.com. All rights reserved.</footer>
+  </div>
+
+  <div id="toast-notification" class="toast-notification"></div>
+
+  <script>
+    let laporanRiwayat = JSON.parse(localStorage.getItem('laporanRiwayat')) || [];
+    let editingReportId = null; 
+    let monthlyReportsChartInstance = null; // Variable to hold the Chart.js instance
+
+    const navTabs = document.querySelectorAll('.nav-tabs li');
+    const contentSections = document.querySelectorAll('.content-section');
+    const reportForm = document.getElementById('reportForm');
+    const riwayatLaporanContainer = document.getElementById('riwayat-laporan-container');
+    const notificationsContainer = document.getElementById('notifications-container');
+    const currentUserSelect = document.getElementById('currentUser');
+    const namaField = document.getElementById('nama');
+    const headerAvatar = document.getElementById('header-avatar');
+    const submitReportBtn = document.getElementById('submitReportBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const reportIdToEditField = document.getElementById('reportIdToEdit');
+
+    // Form validation elements
+    const tanggalInput = document.getElementById('tanggal');
+    const jamKerjaInput = document.getElementById('jamKerja');
+    const keteranganInput = document.getElementById('keterangan');
+    const fotoLaporanInput = document.getElementById('fotoLaporan'); // New: Foto input
+    const imagePreview = document.getElementById('imagePreview'); // New: Image preview
+
+    // Print section elements
+    const printStartDate = document.getElementById('printStartDate');
+    const printEndDate = document.getElementById('printEndDate');
+    const generatePrintBtn = document.getElementById('generatePrint');
+    const printReportsBtn = document.getElementById('printReports');
+    const printPreviewContainer = document.getElementById('print-preview-container');
+
+    /* ... (kode JavaScript Anda sebelumnya) ... */
+
+    // History filter elements
+    const historyStartDate = document.getElementById('historyStartDate');
+    const historyEndDate = document.getElementById('historyEndDate');
+    const searchKeyword = document.getElementById('searchKeyword');
+    const filterJamKerjaMin = document.getElementById('filterJamKerjaMin');
+    const filterJamKerjaMax = document.getElementById('filterJamKerjaMax');
+    const sortBy = document.getElementById('sortBy');
+    const sortOrder = document.getElementById('sortOrder');
+    const applyHistoryFiltersBtn = document.getElementById('applyHistoryFilters');
+    const clearHistoryFiltersBtn = document.getElementById('clearHistoryFilters'); // Added this line
+
+    // Dashboard elements
+    const dashboardTotalReports = document.getElementById('dashboard-total-reports');
+    const dashboardTotalHours = document.getElementById('dashboard-total-hours');
+    const dashboardLastReport = document.getElementById('dashboard-last-report');
+    const recentActivityContainer = document.getElementById('recent-activity-container');
+
+    // Global delete button
+    const deleteAllReportsGlobalBtn = document.getElementById('deleteAllReportsGlobalBtn');
+    const deleteAllUserReportsBtn = document.getElementById('deleteAllUserReportsBtn');
+
+    // Backup and Restore elements
+    const backupDataBtn = document.getElementById('backupDataBtn');
+    const restoreInput = document.getElementById('restoreInput');
+    const restoreDataBtn = document.getElementById('restoreDataBtn');
+
+
+    // --- Helper Functions ---
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast-notification');
+      toast.textContent = message;
+      toast.className = `toast-notification show ${type}`;
+      setTimeout(() => {
+        toast.className = toast.className.replace('show', '');
+      }, 3000);
+    }
+
+    function formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return date.toLocaleDateString('id-ID', options);
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString + 'T00:00:00'); // Add T00:00:00 to treat as local date
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return date.toLocaleDateString('id-ID', options);
+    }
+
+    function validateForm() {
+      let isValid = true;
+
+      // Reset errors
+      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+      document.querySelectorAll('input, select, textarea').forEach(el => el.classList.remove('error'));
+
+      if (!tanggalInput.value) {
+        document.getElementById('tanggal-error').textContent = 'Tanggal wajib diisi.';
+        tanggalInput.classList.add('error');
+        isValid = false;
+      }
+
+      if (!namaField.value) {
+        document.getElementById('nama-error').textContent = 'Nama pengurus wajib dipilih.';
+        namaField.classList.add('error');
+        isValid = false;
+      }
+
+      if (!jamKerjaInput.value || jamKerjaInput.value <= 0 || jamKerjaInput.value > 24) {
+        document.getElementById('jamKerja-error').textContent = 'Jam kerja harus antara 1 dan 24.';
+        jamKerjaInput.classList.add('error');
+        isValid = false;
+      }
+
+      if (!keteranganInput.value.trim()) {
+        document.getElementById('keterangan-error').textContent = 'Keterangan tidak boleh kosong.';
+        keteranganInput.classList.add('error');
+        isValid = false;
+      }
+
+      return isValid;
+    }
+
+    function updateHeaderAvatar() {
+      const selectedUser = currentUserSelect.value;
+      if (selectedUser) {
+        headerAvatar.textContent = selectedUser.charAt(0).toUpperCase();
+      } else {
+        headerAvatar.textContent = '-';
+      }
+      // Also update the name field in the report form
+      namaField.value = selectedUser;
+    }
+
+    function saveReports() {
+      localStorage.setItem('laporanRiwayat', JSON.stringify(laporanRiwayat));
+      updateDashboard();
+      displayRecentActivity();
+    }
+
+    function addNotification(message) {
+      const notificationItem = document.createElement('div');
+      notificationItem.classList.add('notification-item');
+      notificationItem.innerHTML = `<p>${message}</p><span style="font-size:11px; color:var(--gray);">${formatTimestamp(Date.now())}</span>`;
+      if (notificationsContainer.querySelector('.empty-state-small')) {
+        notificationsContainer.innerHTML = '';
+      }
+      notificationsContainer.prepend(notificationItem); // Add to top
+    }
+
+    function clearNotifications() {
+      notificationsContainer.innerHTML = `
+        <div class="empty-state-small">
+          <i class="fas fa-bell-slash"></i>
+          <p>Belum ada aktivitas</p>
+        </div>
+      `;
+    }
+
+    function displayReports(reportsToDisplay, container, showActions = false) {
+      container.innerHTML = '';
+      const currentUser = currentUserSelect.value;
+      const filteredReports = reportsToDisplay.filter(report => report.nama === currentUser);
+
+      if (filteredReports.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>Silakan pilih pengurus di atas untuk melihat riwayat laporan Anda, atau belum ada laporan.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filteredReports.forEach(report => {
+        const reportItem = document.createElement('div');
+        reportItem.classList.add('history-item');
+        reportItem.dataset.id = report.id;
+
+        let imageHtml = report.foto ? `<img src="${report.foto}" alt="Foto Laporan" style="max-width: 100px; height: auto; border-radius: 5px; margin-top: 10px; display: block;">` : '';
+
+        reportItem.innerHTML = `
+          <div class="report-header">
+            <div>
+              <strong>Laporan Tanggal: ${formatDate(report.tanggal)}</strong>
+            </div>
+            <div class="report-meta">
+              <span><i class="fas fa-user"></i> ${report.nama}</span>
+              <span><i class="fas fa-hourglass-half"></i> ${report.jamKerja} jam</span>
+              <span><i class="fas fa-clock"></i> ${formatTimestamp(report.timestamp)}</span>
+            </div>
+          </div>
+          <div class="report-content">
+            <p><strong>Keterangan:</strong> ${report.keterangan}</p>
+            ${imageHtml}
+          </div>
+          ${showActions ? `
+          <div class="report-actions">
+            <button class="action-btn edit-btn" data-id="${report.id}" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="action-btn delete-btn" data-id="${report.id}" title="Hapus"><i class="fas fa-trash"></i></button>
+          </div>
+          ` : ''}
+        `;
+        container.appendChild(reportItem);
+      });
+
+      if (showActions) {
+        container.querySelectorAll('.edit-btn').forEach(button => {
+          button.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.id;
+            editReport(id);
+          });
+        });
+        container.querySelectorAll('.delete-btn').forEach(button => {
+          button.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.id;
+            deleteReport(id);
+          });
+        });
+      }
+    }
+
+    function filterAndDisplayHistoryReports() {
+      const currentUser = currentUserSelect.value;
+      if (!currentUser) {
+        riwayatLaporanContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>Silakan pilih pengurus di atas untuk melihat riwayat laporan Anda.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let filtered = laporanRiwayat.filter(report => report.nama === currentUser);
+
+      const start = historyStartDate.value ? new Date(historyStartDate.value + 'T00:00:00') : null;
+      const end = historyEndDate.value ? new Date(historyEndDate.value + 'T23:59:59') : null;
+      const keyword = searchKeyword.value.toLowerCase();
+      const minJamKerja = parseFloat(filterJamKerjaMin.value);
+      const maxJamKerja = parseFloat(filterJamKerjaMax.value);
+
+      if (start) {
+        filtered = filtered.filter(report => new Date(report.tanggal + 'T00:00:00') >= start);
+      }
+      if (end) {
+        filtered = filtered.filter(report => new Date(report.tanggal + 'T00:00:00') <= end);
+      }
+      if (keyword) {
+        filtered = filtered.filter(report => report.keterangan.toLowerCase().includes(keyword));
+      }
+      if (!isNaN(minJamKerja)) {
+        filtered = filtered.filter(report => report.jamKerja >= minJamKerja);
+      }
+      if (!isNaN(maxJamKerja)) {
+        filtered = filtered.filter(report => report.jamKerja <= maxJamKerja);
+      }
+
+      const sortKey = sortBy.value;
+      const order = sortOrder.value;
+
+      filtered.sort((a, b) => {
+        let valA, valB;
+        if (sortKey === 'timestamp' || sortKey === 'tanggal') {
+          valA = new Date(a[sortKey]);
+          valB = new Date(b[sortKey]);
+        } else {
+          valA = a[sortKey];
+          valB = b[sortKey];
+        }
+
+        if (order === 'asc') {
+          return valA > valB ? 1 : -1;
+        } else {
+          return valA < valB ? 1 : -1;
+        }
+      });
+
+      displayReports(filtered, riwayatLaporanContainer, true);
+    }
+
+    function updateDashboard() {
+      const currentUser = currentUserSelect.value;
+      const userReports = laporanRiwayat.filter(report => report.nama === currentUser);
+
+      dashboardTotalReports.textContent = userReports.length;
+
+      const totalHours = userReports.reduce((sum, report) => sum + parseInt(report.jamKerja), 0);
+      dashboardTotalHours.textContent = totalHours;
+
+      if (userReports.length > 0) {
+        const latestReport = userReports.sort((a, b) => b.timestamp - a.timestamp)[0];
+        dashboardLastReport.textContent = formatDate(latestReport.tanggal);
+      } else {
+        dashboardLastReport.textContent = 'Belum ada';
+      }
+
+      updateMonthlyReportsChart(userReports);
+    }
+
+    function updateMonthlyReportsChart(userReports) {
+      if (monthlyReportsChartInstance) {
+        monthlyReportsChartInstance.destroy();
+      }
+
+      const monthlyData = {};
+      userReports.forEach(report => {
+        const date = new Date(report.tanggal + 'T00:00:00');
+        const monthYear = date.toLocaleString('id-ID', { month: 'short', year: 'numeric' });
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = 0;
+        }
+        monthlyData[monthYear]++;
+      });
+
+      const labels = Object.keys(monthlyData).sort((a, b) => {
+        const dateA = new Date(`1 ${a}`);
+        const dateB = new Date(`1 ${b}`);
+        return dateA - dateB;
+      });
+      const data = labels.map(label => monthlyData[label]);
+
+      const ctx = document.getElementById('monthlyReportsChart').getContext('2d');
+      monthlyReportsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Jumlah Laporan',
+            data: data,
+            backgroundColor: 'rgba(52, 152, 219, 0.8)',
+            borderColor: 'rgba(52, 152, 219, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    function displayRecentActivity() {
+      const currentUser = currentUserSelect.value;
+      const userReports = laporanRiwayat.filter(report => report.nama === currentUser);
+      
+      if (userReports.length === 0) {
+        recentActivityContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-clipboard"></i>
+            <p>Belum ada laporan dari Anda.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const recentReports = userReports.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5); // Get latest 5
+      
+      recentActivityContainer.innerHTML = '';
+      recentReports.forEach(report => {
+        const reportItem = document.createElement('div');
+        reportItem.classList.add('history-item');
+        reportItem.innerHTML = `
+          <strong>Laporan Tanggal: ${formatDate(report.tanggal)}</strong><br>
+          <small>Jam Kerja: ${report.jamKerja} jam</small><br>
+          <p>${report.keterangan.substring(0, 100)}${report.keterangan.length > 100 ? '...' : ''}</p>
+          <small style="color: var(--gray);">Dilaporkan: ${formatTimestamp(report.timestamp)}</small>
+        `;
+        recentActivityContainer.appendChild(reportItem);
+      });
+    }
+
+    function exportReportsToCSV() {
+      const currentUser = currentUserSelect.value;
+      if (!currentUser) {
+        showToast('Silakan pilih pengurus terlebih dahulu.', 'danger');
+        return;
+      }
+
+      const userReports = laporanRiwayat.filter(report => report.nama === currentUser);
+
+      if (userReports.length === 0) {
+        showToast('Tidak ada laporan untuk pengurus ini.', 'warning');
+        return;
+      }
+
+      const csvData = userReports.map(report => ({
+        Id: report.id,
+        Tanggal: report.tanggal,
+        Nama_Pengurus: report.nama,
+        Jam_Kerja: report.jamKerja,
+        Keterangan: report.keterangan.replace(/"/g, '""'), // Escape double quotes
+        Timestamp: new Date(report.timestamp).toISOString(),
+        Foto_URL: report.foto || ''
+      }));
+
+      const csv = PapaParse.unparse(csvData);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `laporan_kosbaik_${currentUser}_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Laporan berhasil diexport ke CSV!');
+    }
+
+    function backupData() {
+      const dataStr = JSON.stringify(laporanRiwayat, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kosbaik_backup_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Data berhasil dibackup!');
+    }
+
+    function restoreData(event) {
+      const file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const loadedData = JSON.parse(e.target.result);
+          if (Array.isArray(loadedData) && loadedData.every(item => typeof item === 'object' && 'id' in item && 'tanggal' in item)) {
+            if (confirm('Apakah Anda yakin ingin me-restore data? Ini akan menimpa data yang ada saat ini.')) {
+              laporanRiwayat = loadedData;
+              saveReports();
+              filterAndDisplayHistoryReports(); // Refresh history with restored data
+              updateDashboard();
+              showToast('Data berhasil direstore!');
+            }
+          } else {
+            throw new Error('Format data tidak valid.');
+          }
+        } catch (error) {
+          showToast('Gagal me-restore data: ' + error.message, 'danger');
+          console.error('Restore error:', error);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function deleteAllUserReports() {
+      const currentUser = currentUserSelect.value;
+      if (!currentUser) {
+        showToast('Pilih pengurus terlebih dahulu untuk menghapus laporannya.', 'danger');
+        return;
+      }
+
+      if (confirm(`Apakah Anda yakin ingin menghapus SEMUA laporan untuk pengurus ${currentUser}? Tindakan ini tidak dapat dibatalkan!`)) {
+        laporanRiwayat = laporanRiwayat.filter(report => report.nama !== currentUser);
+        saveReports();
+        filterAndDisplayHistoryReports();
+        showToast(`Semua laporan untuk ${currentUser} berhasil dihapus!`);
+        addNotification(`Semua laporan untuk ${currentUser} telah dihapus.`);
+      }
+    }
+
+    function deleteAllReportsGlobally() {
+      if (confirm('PERINGATAN: Ini akan menghapus SEMUA laporan dari SEMUA pengurus! Apakah Anda sangat yakin ingin melanjutkan? Tindakan ini TIDAK DAPAT DIBATALKAN!')) {
+        laporanRiwayat = [];
+        saveReports();
+        filterAndDisplayHistoryReports(); // Clear history display
+        showToast('Semua laporan (global) berhasil dihapus!', 'danger');
+        clearNotifications(); // Clear notifications as well
+        addNotification('SEMUA laporan telah dihapus secara permanen.');
+      }
+    }
+
+    // --- Event Listeners ---
+
+    navTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        navTabs.forEach(item => item.classList.remove('active'));
+        tab.classList.add('active');
+
+        const target = document.querySelector(tab.dataset.tabTarget);
+        contentSections.forEach(section => section.classList.remove('active'));
+        target.classList.add('active');
+
+        // Specific actions when tabs are clicked
+        if (tab.dataset.tabTarget === '#riwayat') {
+          filterAndDisplayHistoryReports();
+        } else if (tab.dataset.tabTarget === '#dashboard') {
+          updateDashboard();
+        } else if (tab.dataset.tabTarget === '#lapor') {
+          // If coming from edit, make sure form is reset
+          if (editingReportId) {
+            resetReportForm();
+          }
+        } else if (tab.dataset.tabTarget === '#cetak') {
+          // Clear print preview when entering the tab
+          printPreviewContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>Pilih pengurus di header, lalu pilih rentang tanggal dan klik "Tampilkan" untuk melihat laporan.</p>
+            </div>
+          `;
+          printReportsBtn.style.display = 'none'; // Hide print button initially
+        }
+      });
+    });
+
+    currentUserSelect.addEventListener('change', () => {
+      updateHeaderAvatar();
+      // If on riwayat or dashboard tab, refresh content for new user
+      const activeTab = document.querySelector('.nav-tabs li.active');
+      if (activeTab && (activeTab.dataset.tabTarget === '#riwayat' || activeTab.dataset.tabTarget === '#dashboard' || activeTab.dataset.tabTarget === '#cetak')) {
+        // Trigger filter and display for history/dashboard
+        if (activeTab.dataset.tabTarget === '#riwayat') {
+          filterAndDisplayHistoryReports();
+        } else if (activeTab.dataset.tabTarget === '#dashboard') {
+          updateDashboard();
+        } else if (activeTab.dataset.tabTarget === '#cetak') {
+          // Reset print preview as well
+          printPreviewContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>Pilih pengurus di header, lalu pilih rentang tanggal dan klik "Tampilkan" untuk melihat laporan.</p>
+            </div>
+          `;
+          printReportsBtn.style.display = 'none';
+        }
+      }
+    });
+
+    reportForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      if (!validateForm()) {
+        showToast('Harap lengkapi semua bidang yang wajib diisi dengan benar.', 'danger');
+        return;
+      }
+
+      const tanggal = tanggalInput.value;
+      const nama = namaField.value;
+      const jamKerja = parseInt(jamKerjaInput.value);
+      const keterangan = keteranganInput.value.trim();
+      const fotoFile = fotoLaporanInput.files[0];
+      let fotoBase64 = '';
+
+      const processReport = () => {
+        if (editingReportId) {
+          // Update existing report
+          const reportIndex = laporanRiwayat.findIndex(report => report.id === editingReportId);
+          if (reportIndex !== -1) {
+            laporanRiwayat[reportIndex] = {
+              ...laporanRiwayat[reportIndex], // Keep existing timestamp
+              tanggal,
+              nama,
+              jamKerja,
+              keterangan,
+              foto: fotoBase64 || laporanRiwayat[reportIndex].foto // Keep old foto if new not provided
+            };
+            showToast('Laporan berhasil diperbarui!');
+            addNotification(`Laporan tanggal ${formatDate(tanggal)} oleh ${nama} berhasil diperbarui.`);
+          }
+          editingReportId = null;
+          submitReportBtn.textContent = 'Kirim Laporan';
+          cancelEditBtn.style.display = 'none';
+        } else {
+          // Add new report
+          const newReport = {
+            id: Date.now(), // Unique ID
+            tanggal,
+            nama,
+            jamKerja,
+            keterangan,
+            timestamp: Date.now(),
+            foto: fotoBase64
+          };
+          laporanRiwayat.push(newReport);
+          showToast('Laporan berhasil ditambahkan!');
+          addNotification(`Laporan baru tanggal ${formatDate(tanggal)} oleh ${nama} telah ditambahkan.`);
+        }
+        saveReports();
+        reportForm.reset();
+        imagePreview.style.display = 'none'; // Hide preview after submission
+        imagePreview.src = '#'; // Clear image source
+        // Ensure the active tab is handled after submission
+        const activeTab = document.querySelector('.nav-tabs li.active');
+        if (activeTab && activeTab.dataset.tabTarget === '#riwayat') {
+          filterAndDisplayHistoryReports();
+        } else if (activeTab && activeTab.dataset.tabTarget === '#dashboard') {
+          updateDashboard();
+        }
+      };
+
+      if (fotoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          fotoBase64 = e.target.result;
+          processReport();
+        };
+        reader.readAsDataURL(fotoFile);
+      } else {
+        processReport();
+      }
+    });
+
+    cancelEditBtn.addEventListener('click', () => {
+      resetReportForm();
+      showToast('Pembatalan edit laporan.');
+    });
+
+    function resetReportForm() {
+      reportForm.reset();
+      editingReportId = null;
+      submitReportBtn.textContent = 'Kirim Laporan';
+      cancelEditBtn.style.display = 'none';
+      imagePreview.style.display = 'none';
+      imagePreview.src = '#';
+      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+      document.querySelectorAll('input, select, textarea').forEach(el => el.classList.remove('error'));
+    }
+
+    function editReport(id) {
+      const reportToEdit = laporanRiwayat.find(report => report.id === parseInt(id));
+      if (reportToEdit) {
+        editingReportId = parseInt(id);
+        tanggalInput.value = reportToEdit.tanggal;
+        namaField.value = reportToEdit.nama;
+        jamKerjaInput.value = reportToEdit.jamKerja;
+        keteranganInput.value = reportToEdit.keterangan;
+        
+        if (reportToEdit.foto) {
+          imagePreview.src = reportToEdit.foto;
+          imagePreview.style.display = 'block';
+        } else {
+          imagePreview.style.display = 'none';
+          imagePreview.src = '#';
+        }
+
+        submitReportBtn.textContent = 'Update Laporan';
+        cancelEditBtn.style.display = 'inline-flex'; // Show cancel button
+        
+        // Switch to "Buat Laporan" tab
+        document.querySelector('.nav-tabs li.active').classList.remove('active');
+        document.querySelector('#lapor-tab').classList.add('active'); // Assuming you add an ID to the 'Buat Laporan' tab
+        contentSections.forEach(section => section.classList.remove('active'));
+        document.getElementById('lapor').classList.add('active');
+        showToast('Anda sedang mengedit laporan.');
+      }
+    }
+
+    function deleteReport(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus laporan ini?')) {
+        const reportIndex = laporanRiwayat.findIndex(report => report.id === parseInt(id));
+        if (reportIndex !== -1) {
+          const deletedReport = laporanRiwayat.splice(reportIndex, 1)[0];
+          saveReports();
+          filterAndDisplayHistoryReports();
+          showToast('Laporan berhasil dihapus!', 'danger');
+          addNotification(`Laporan tanggal ${formatDate(deletedReport.tanggal)} oleh ${deletedReport.nama} telah dihapus.`);
+        }
+      }
+    }
+
+    fotoLaporanInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        imagePreview.src = '#';
+        imagePreview.style.display = 'none';
+      }
+    });
+
+    // History filter event listeners
+    applyHistoryFiltersBtn.addEventListener('click', filterAndDisplayHistoryReports);
+    clearHistoryFiltersBtn.addEventListener('click', () => {
+      historyStartDate.value = '';
+      historyEndDate.value = '';
+      searchKeyword.value = '';
+      filterJamKerjaMin.value = '';
+      filterJamKerjaMax.value = '';
+      sortBy.value = 'timestamp';
+      sortOrder.value = 'desc';
+      filterAndDisplayHistoryReports();
+      showToast('Filter riwayat telah direset.');
+    });
+    document.getElementById('exportReportsCSV').addEventListener('click', exportReportsToCSV);
+    deleteAllUserReportsBtn.addEventListener('click', deleteAllUserReports);
+
+    // Global settings buttons
+    backupDataBtn.addEventListener('click', backupData);
+    restoreDataBtn.addEventListener('click', () => restoreInput.click()); // Trigger file input click
+    restoreInput.addEventListener('change', restoreData);
+    deleteAllReportsGlobalBtn.addEventListener('click', deleteAllReportsGlobally);
+
+
+    // --- Print Feature Logic ---
+    generatePrintBtn.addEventListener('click', () => {
+      const currentUser = currentUserSelect.value;
+      if (!currentUser) {
+        showToast('Pilih pengurus terlebih dahulu.', 'danger');
+        return;
+      }
+
+      const start = printStartDate.value ? new Date(printStartDate.value + 'T00:00:00') : null;
+      const end = printEndDate.value ? new Date(printEndDate.value + 'T23:59:59') : null;
+
+      if (!start || !end) {
+        showToast('Pilih rentang tanggal untuk mencetak laporan.', 'danger');
+        return;
+      }
+
+      if (start > end) {
+        showToast('Tanggal mulai tidak boleh lebih lambat dari tanggal selesai.', 'danger');
+        return;
+      }
+
+      let reportsToPrint = laporanRiwayat.filter(report => report.nama === currentUser);
+      reportsToPrint = reportsToPrint.filter(report => {
+        const reportDate = new Date(report.tanggal + 'T00:00:00');
+        return reportDate >= start && reportDate <= end;
+      });
+
+      reportsToPrint.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal)); // Sort by date for print
+
+      if (reportsToPrint.length === 0) {
+        printPreviewContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <p>Tidak ada laporan ditemukan untuk pengurus ${currentUser} dalam rentang tanggal yang dipilih.</p>
+          </div>
+        `;
+        printReportsBtn.style.display = 'none';
+        showToast('Tidak ada laporan untuk dicetak.', 'warning');
+        return;
+      }
+
+      let printContentHtml = `
+        <h3>Laporan Harian - ${currentUser}</h3>
+        <p style="text-align: center; margin-bottom: 20px;">
+          Dari: ${formatDate(printStartDate.value)} Sampai: ${formatDate(printEndDate.value)}
+        </p>
+      `;
+
+      reportsToPrint.forEach(report => {
+        let fotoHtml = report.foto ? `<img src="${report.foto}" style="max-width: 150px; height: auto; display: block; margin-top: 10px; border: 1px solid #ddd; padding: 5px;">` : '';
+        printContentHtml += `
+          <div class="print-report-item">
+            <p><strong>Tanggal Laporan:</strong> ${formatDate(report.tanggal)}</p>
+            <p><strong>Nama Pengurus:</strong> ${report.nama}</p>
+            <p><strong>Jam Kerja:</strong> ${report.jamKerja} jam</p>
+            <p><strong>Keterangan:</strong> ${report.keterangan}</p>
+            <p><strong>Waktu Input:</strong> ${formatTimestamp(report.timestamp)}</p>
+            ${fotoHtml}
+          </div>
+        `;
+      });
+
+      printPreviewContainer.innerHTML = printContentHtml;
+      printReportsBtn.style.display = 'inline-flex'; // Show print button
+      showToast('Pratinjau laporan siap dicetak.');
+    });
+
+    printReportsBtn.addEventListener('click', () => {
+      // The CSS @media print rules will handle what gets printed
+      window.print();
+    });
+
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', () => {
+      updateHeaderAvatar(); // Set initial avatar based on default selected user
+      updateDashboard(); // Initial dashboard load
+      filterAndDisplayHistoryReports(); // Initial history load
+      // Set today's date for 'tanggal' field
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+      const dd = String(today.getDate()).padStart(2, '0');
+      tanggalInput.value = `${yyyy}-${mm}-${dd}`;
+
+      // Add ID to 'Buat Laporan' tab for easier JS access
+      document.querySelector('li[data-tab-target="#lapor"]').id = 'lapor-tab';
+    });
+
+    // Save selected user to local storage on change
+    currentUserSelect.addEventListener('change', () => {
+        localStorage.setItem('currentUser', currentUserSelect.value);
+    });
+  </script>
+</body>
+</html>
